@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pop Up Grocer — Brand Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f9f8f6;
+      color: #1a1a1a;
+      font-size: 14px;
+    }
+
+    header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.02em; }
+    header span { font-size: 12px; color: #888; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    /* Rotation selector */
+    .rotation-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .rotation-bar label { font-weight: 600; font-size: 13px; }
+    select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 14px;
+      min-width: 200px;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-width: 150px;
+    }
+    .stat-card .num { font-size: 28px; font-weight: 700; }
+    .stat-card .lbl { font-size: 12px; color: #888; margin-top: 2px; }
+    .stat-card.green .num { color: #16a34a; }
+    .stat-card.red .num { color: #dc2626; }
+    .stat-card.blue .num { color: #2563eb; }
+
+    /* Action buttons */
+    .actions { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+    button {
+      padding: 9px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: #1a1a1a; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-warning { background: #d97706; color: #fff; }
+    .btn-outline { background: #fff; color: #1a1a1a; border: 1px solid #ddd; }
+
+    /* Copy from rotation */
+    .copy-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .copy-bar label { font-weight: 500; font-size: 13px; white-space: nowrap; }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      flex: 1;
+      max-width: 360px;
+    }
+    .filter-btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .filter-btn.active { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+    /* Brand table */
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e8e8e8; }
+    th { background: #f4f4f4; text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e8e8e8; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-ok { background: #dcfce7; color: #16a34a; }
+    .badge-missing { background: #fee2e2; color: #dc2626; }
+    .badge-partial { background: #fef9c3; color: #92400e; }
+
+    .email-list { display: flex; flex-direction: column; gap: 4px; }
+    .email-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-green { background: #16a34a; }
+    .dot-red { background: #dc2626; }
+
+    .edit-btn {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .edit-btn:hover { border-color: #999; }
+
+    /* Modal */
+    .modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h2 { font-size: 16px; margin-bottom: 4px; }
+    .modal .sub { color: #888; font-size: 13px; margin-bottom: 16px; }
+    textarea {
+      width: 100%;
+      height: 140px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+      resize: vertical;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 200;
+      max-width: 380px;
+    }
+    .toast.show { opacity: 1; }
+    .toast.green { background: #16a34a; }
+    .toast.red { background: #dc2626; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: #555; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty { color: #aaa; font-style: italic; font-size: 13px; }
+
+    /* No results */
+    .no-results { text-align: center; padding: 40px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Pop Up Grocer — Brand Admin</h1>
+  <span id="auth-count"></span>
+</header>
+
+<div class="container">
+
+  <!-- Rotation selector -->
+  <div class="rotation-bar">
+    <label for="rot-select">Rotation</label>
+    <select id="rot-select">
+      <option value="">Loading rotations…</option>
+    </select>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row" style="display:none">
+    <div class="stat-card blue"><div class="num" id="stat-brands">—</div><div class="lbl">Brands</div></div>
+    <div class="stat-card blue"><div class="num" id="stat-emails">—</div><div class="lbl">Email Slots</div></div>
+    <div class="stat-card green"><div class="num" id="stat-ok">—</div><div class="lbl">Have Firebase Access</div></div>
+    <div class="stat-card red"><div class="num" id="stat-missing">—</div><div class="lbl">Missing Firebase Access</div></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn-success" id="sync-btn" onclick="syncUsers()">⚡ Create missing Firebase users</button>
+    <button class="btn-outline" onclick="refreshBrands()">↺ Refresh</button>
+  </div>
+
+  <!-- Copy from rotation -->
+  <div class="copy-bar" id="copy-bar" style="display:none">
+    <label>Copy emails from previous rotation:</label>
+    <select id="copy-from-select"></select>
+    <button class="btn-warning" onclick="copyFromRotation()">Copy emails</button>
+  </div>
+
+  <!-- Search + filter -->
+  <div class="search-bar" id="search-bar" style="display:none">
+    <input type="text" id="search-input" placeholder="Search brands…" oninput="renderTable()" />
+    <button class="filter-btn" id="filter-missing-btn" onclick="toggleMissingFilter()">Show missing only</button>
+  </div>
+
+  <!-- Table -->
+  <div id="table-container"></div>
+
+  <div id="loading" style="display:none; padding:40px; text-align:center; color:#888;">
+    <span class="spinner"></span> Loading brands and checking Firebase Auth…
+  </div>
+
+</div>
+
+<!-- Edit emails modal -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <h2 id="modal-brand-name">Edit emails</h2>
+    <div class="sub">One email per line. Saving will also create any missing Firebase Auth accounts.</div>
+    <textarea id="modal-emails"></textarea>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveEmails()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let rotations = [];
+  let currentBrands = [];
+  let currentAuthStatus = {};
+  let currentRotId = '';
+  let showMissingOnly = false;
+  let editingBrand = null;
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  async function init() {
+    // Load auth stats
+    fetch('/api/auth/stats').then(r => r.json()).then(d => {
+      document.getElementById('auth-count').textContent = `${d.totalUsers.toLocaleString()} total Firebase users`;
+    });
+
+    // Load rotations
+    const res = await fetch('/api/rotations');
+    rotations = await res.json();
+    const sel = document.getElementById('rot-select');
+    sel.innerHTML = '<option value="">— select a rotation —</option>';
+    rotations.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name + (r.isActive ? ' ★ (active)' : '');
+      sel.appendChild(opt);
+      // Auto-select active
+      if (r.isActive) sel.value = r.id;
+    });
+    sel.onchange = () => loadBrands(sel.value);
+    if (sel.value) loadBrands(sel.value);
+  }
+
+  // ── Load brands ─────────────────────────────────────────────────────────────
+  async function loadBrands(rotId) {
+    if (!rotId) return;
+    currentRotId = rotId;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('table-container').innerHTML = '';
+    document.getElementById('stats-row').style.display = 'none';
+    document.getElementById('actions').style.display = 'none';
+    document.getElementById('copy-bar').style.display = 'none';
+    document.getElementById('search-bar').style.display = 'none';
+
+    try {
+      const res = await fetch(`/api/rotations/${rotId}/brands`);
+      const data = await res.json();
+      currentBrands = data.brands;
+      currentAuthStatus = data.authStatus;
+
+      updateStats();
+      populateCopyFrom(rotId);
+      document.getElementById('actions').style.display = 'flex';
+      document.getElementById('copy-bar').style.display = 'flex';
+      document.getElementById('search-bar').style.display = 'flex';
+      renderTable();
+    } catch (e) {
+      showToast('Error loading brands: ' + e.message, 'red');
+    } finally {
+      document.getElementById('loading').style.display = 'none';
+    }
+  }
+
+  async function refreshBrands() { await loadBrands(currentRotId); }
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  function updateStats() {
+    const allEmails = currentBrands.flatMap(b => b.emails || []);
+    const uniqueEmails = [...new Set(allEmails)];
+    const missing = uniqueEmails.filter(e => !currentAuthStatus[e]?.exists);
+
+    document.getElementById('stat-brands').textContent = currentBrands.length;
+    document.getElementById('stat-emails').textContent = uniqueEmails.length;
+    document.getElementById('stat-ok').textContent = uniqueEmails.length - missing.length;
+    document.getElementById('stat-missing').textContent = missing.length;
+    document.getElementById('stats-row').style.display = 'flex';
+
+    const syncBtn = document.getElementById('sync-btn');
+    if (missing.length === 0) {
+      syncBtn.textContent = '✓ All users have Firebase access';
+      syncBtn.disabled = true;
+    } else {
+      syncBtn.textContent = `⚡ Create ${missing.length} missing Firebase user${missing.length !== 1 ? 's' : ''}`;
+      syncBtn.disabled = false;
+    }
+  }
+
+  // ── Copy-from dropdown ───────────────────────────────────────────────────────
+  function populateCopyFrom(currentRotId) {
+    const sel = document.getElementById('copy-from-select');
+    sel.innerHTML = '<option value="">— pick a rotation —</option>';
+    rotations.filter(r => r.id !== currentRotId).forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── Render table ─────────────────────────────────────────────────────────────
+  function renderTable() {
+    const query = document.getElementById('search-input').value.toLowerCase();
+
+    let brands = currentBrands.filter(b => {
+      const matchSearch = !query ||
+        (b.name || '').toLowerCase().includes(query) ||
+        (b.category || '').toLowerCase().includes(query) ||
+        (b.emails || []).some(e => e.toLowerCase().includes(query));
+
+      const emails = b.emails || [];
+      const hasMissing = emails.some(e => !currentAuthStatus[e]?.exists) || emails.length === 0;
+      const matchFilter = !showMissingOnly || hasMissing;
+
+      return matchSearch && matchFilter;
+    });
+
+    if (brands.length === 0) {
+      document.getElementById('table-container').innerHTML = '<div class="no-results">No brands match your search.</div>';
+      return;
+    }
+
+    const rows = brands.map(b => {
+      const emails = b.emails || [];
+      const allOk = emails.length > 0 && emails.every(e => currentAuthStatus[e]?.exists);
+      const someMissing = emails.some(e => !currentAuthStatus[e]?.exists);
+      const noEmails = emails.length === 0;
+
+      let statusBadge;
+      if (noEmails) statusBadge = `<span class="badge badge-missing">No emails</span>`;
+      else if (allOk) statusBadge = `<span class="badge badge-ok">✓ All active</span>`;
+      else if (someMissing) statusBadge = `<span class="badge badge-partial">⚠ Partial</span>`;
+
+      const emailItems = emails.map(e => {
+        const ok = currentAuthStatus[e]?.exists;
+        return `<div class="email-item">
+          <div class="dot ${ok ? 'dot-green' : 'dot-red'}"></div>
+          <span>${e}</span>
+        </div>`;
+      }).join('');
+
+      return `<tr>
+        <td><strong>${escHtml(b.name || '')}</strong></td>
+        <td>${escHtml(b.category || '')}</td>
+        <td>
+          <div class="email-list">
+            ${emailItems || '<span class="empty">none</span>'}
+          </div>
+        </td>
+        <td>${statusBadge}</td>
+        <td><button class="edit-btn" onclick="openEditModal('${b.docId}')">Edit emails</button></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('table-container').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Emails</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="padding:10px 0; color:#aaa; font-size:12px;">Showing ${brands.length} of ${currentBrands.length} brands</div>
+    `;
+  }
+
+  // ── Filter toggle ────────────────────────────────────────────────────────────
+  function toggleMissingFilter() {
+    showMissingOnly = !showMissingOnly;
+    const btn = document.getElementById('filter-missing-btn');
+    btn.classList.toggle('active', showMissingOnly);
+    btn.textContent = showMissingOnly ? 'Show all brands' : 'Show missing only';
+    renderTable();
+  }
+
+  // ── Sync users ───────────────────────────────────────────────────────────────
+  async function syncUsers() {
+    const btn = document.getElementById('sync-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating users…';
+
+    try {
+      const res = await fetch(`/api/rotations/${currentRotId}/sync-users`, { method: 'POST' });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      let msg = '';
+      if (data.created.length > 0) msg += `Created ${data.created.length} new user${data.created.length !== 1 ? 's' : ''}. `;
+      if (data.errors.length > 0) msg += `${data.errors.length} error${data.errors.length !== 1 ? 's' : ''}.`;
+      if (data.created.length === 0 && data.errors.length === 0) msg = 'All users already existed.';
+
+      showToast(msg, data.errors.length > 0 ? 'red' : 'green');
+      await refreshBrands();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'red');
+      btn.disabled = false;
+    }
+  }
+
+  // ── Copy from rotation ───────────────────────────────────────────────────────
+  async function copyFromRotation() {
+    const oldRotId = document.getElementById('copy-from-select').value;
+    if (!oldRotId) { showToast('Pick a rotation to copy from', 'red'); return; }
+
+    if (!confirm(`Copy emails from the selected rotation to this one? Brands with matching names will get their emails updated.`)) return;
+
+    try {
+      const res = await fetch(`/api/rotations/${currentRotId}/copy-from/${oldRotId}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      showToast(`Copied emails for ${data.copied.length} brand${data.copied.length !== 1 ? 's' : ''}. ${data.notFound.length} not matched.`, 'green');
+      await refreshBrands();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'red');
+    }
+  }
+
+  // ── Edit modal ───────────────────────────────────────────────────────────────
+  function openEditModal(docId) {
+    editingBrand = currentBrands.find(b => b.docId === docId);
+    if (!editingBrand) return;
+    document.getElementById('modal-brand-name').textContent = editingBrand.name;
+    document.getElementById('modal-emails').value = (editingBrand.emails || []).join('\n');
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editingBrand = null;
+  }
+
+  async function saveEmails() {
+    if (!editingBrand) return;
+    const raw = document.getElementById('modal-emails').value;
+    const emails = raw.split('\n').map(e => e.trim().toLowerCase()).filter(Boolean);
+
+    try {
+      const res = await fetch(`/api/rotations/${currentRotId}/brands/${editingBrand.docId}/emails`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Unknown error');
+
+      let msg = 'Emails saved.';
+      if (data.created.length > 0) msg += ` Created ${data.created.length} new Firebase user${data.created.length !== 1 * 1: ''}.`;
+      showToast(msg, 'green');
+      closeModal();
+      await refreshBrands();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'red');
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' ' + type : '');
+    setTimeout(() => t.className = 'toast', 3500);
+  }
+
+  // Close modal on bg click
+  document.getElementById('edit-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('edit-modal')) closeModal();
+  });
+
+  init();
+</script>
+</body>
+</html>
