@@ -10,7 +10,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #f9f8f6;
-      color: #1a1a1a;
+      color: #1a1a1a
       font-size: 14px;
     }
 
@@ -542,7 +542,7 @@
       if (!data.success) throw new Error(data.error || 'Unknown error');
 
       let msg = 'Emails saved.';
-      if (data.created.length > 0) msg += ` Created ${data.created.length} new Firebase user${data.created.length !== 1 * 1: ''}.`;
+      if (data.created.length > 0) msg += ` Created ${data.created.length} new Firebase user${data.created.length !== 1 ? 's' : ''}.`;
       showToast(msg, 'green');
       closeModal();
       await refreshBrands();
